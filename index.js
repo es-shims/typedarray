@@ -235,7 +235,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
   /** @constructor */
   var ArrayBuffer = function ArrayBuffer(length) {
     length = ECMAScript.ToInt32(length);
-    if (length < 0) throw new RangeError('ArrayBuffer size is not a small enough positive integer.');
+    if (length < 0) throw new RangeError('ArrayBuffer size is not a small enough positive integer');
 
     this.byteLength = length;
     this._bytes = [];
@@ -278,7 +278,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
       if (!arguments.length || typeof arguments[0] === 'number') {
         // Constructor(unsigned long length)
         this.length = ECMAScript.ToInt32(arguments[0]);
-        if (length < 0) throw new RangeError('ArrayBufferView size is not a small enough positive integer.');
+        if (length < 0) throw new RangeError('ArrayBufferView size is not a small enough positive integer');
 
         this.byteLength = this.length * this.BYTES_PER_ELEMENT;
         this.buffer = new ArrayBuffer(this.byteLength);
