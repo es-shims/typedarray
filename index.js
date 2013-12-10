@@ -551,8 +551,8 @@
     }
 
     var IS_BIG_ENDIAN = (function() {
-      var u16array = new Uint16Array([0x1234]),
-          u8array = new Uint8Array(u16array.buffer);
+      var u16array = new(global.Uint16Array)([0x1234]),
+          u8array = new(global.Uint8Array)(u16array.buffer);
       return r(u8array, 0) === 0x12;
     }());
 
@@ -611,14 +611,14 @@
       };
     }
 
-    DataView.prototype.getUint8 = makeGetter(Uint8Array);
-    DataView.prototype.getInt8 = makeGetter(Int8Array);
-    DataView.prototype.getUint16 = makeGetter(Uint16Array);
-    DataView.prototype.getInt16 = makeGetter(Int16Array);
-    DataView.prototype.getUint32 = makeGetter(Uint32Array);
-    DataView.prototype.getInt32 = makeGetter(Int32Array);
-    DataView.prototype.getFloat32 = makeGetter(Float32Array);
-    DataView.prototype.getFloat64 = makeGetter(Float64Array);
+    DataView.prototype.getUint8 = makeGetter(global.Uint8Array);
+    DataView.prototype.getInt8 = makeGetter(global.Int8Array);
+    DataView.prototype.getUint16 = makeGetter(global.Uint16Array);
+    DataView.prototype.getInt16 = makeGetter(global.Int16Array);
+    DataView.prototype.getUint32 = makeGetter(global.Uint32Array);
+    DataView.prototype.getInt32 = makeGetter(global.Int32Array);
+    DataView.prototype.getFloat32 = makeGetter(global.Float32Array);
+    DataView.prototype.getFloat64 = makeGetter(global.Float64Array);
 
     function makeSetter(arrayType) {
       return function(byteOffset, value, littleEndian) {
@@ -648,14 +648,14 @@
       };
     }
 
-    DataView.prototype.setUint8 = makeSetter(Uint8Array);
-    DataView.prototype.setInt8 = makeSetter(Int8Array);
-    DataView.prototype.setUint16 = makeSetter(Uint16Array);
-    DataView.prototype.setInt16 = makeSetter(Int16Array);
-    DataView.prototype.setUint32 = makeSetter(Uint32Array);
-    DataView.prototype.setInt32 = makeSetter(Int32Array);
-    DataView.prototype.setFloat32 = makeSetter(Float32Array);
-    DataView.prototype.setFloat64 = makeSetter(Float64Array);
+    DataView.prototype.setUint8 = makeSetter(global.Uint8Array);
+    DataView.prototype.setInt8 = makeSetter(global.Int8Array);
+    DataView.prototype.setUint16 = makeSetter(global.Uint16Array);
+    DataView.prototype.setInt16 = makeSetter(global.Int16Array);
+    DataView.prototype.setUint32 = makeSetter(global.Uint32Array);
+    DataView.prototype.setInt32 = makeSetter(global.Int32Array);
+    DataView.prototype.setFloat32 = makeSetter(global.Float32Array);
+    DataView.prototype.setFloat64 = makeSetter(global.Float64Array);
 
     global.DataView = global.DataView || DataView;
 
