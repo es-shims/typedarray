@@ -5,9 +5,10 @@ var src = fs.readFileSync(__dirname + '/../index.js', 'utf8');
 
 test('u8a without globals', function (t) {
     var c = {
-        module: { exports: {} }
+        module: { exports: {} },
     };
-    vm.runInNewContext('(function(){' + src + '}).call(module.exports)', c);
+    c.exports = c.module.exports;
+    vm.runInNewContext(src, c);
     var TA = c.module.exports;
     var ua = new(TA.Uint8Array)(5);
     
