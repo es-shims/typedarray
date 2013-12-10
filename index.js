@@ -68,10 +68,10 @@ var LN2 = Math.LN2,
 
 // ES5: lock down object properties
 function configureProperties(obj) {
-  if (Object.getOwnPropertyNames && Object.defineProperty) {
-    var props = Object.getOwnPropertyNames(obj), i;
+  if (getOwnPropertyNames && defineProperty) {
+    var props = getOwnPropertyNames(obj), i;
     for (i = 0; i < props.length; i += 1) {
-      Object.defineProperty(obj, props[i], {
+      defineProperty(obj, props[i], {
         value: obj[props[i]],
         writable: false,
         enumerable: false,
@@ -85,39 +85,34 @@ function configureProperties(obj) {
 // http://blogs.msdn.com/b/ie/archive/2010/09/07/transitioning-existing-code-to-the-es5-getter-setter-apis.aspx
 // (second clause tests for Object.defineProperty() in IE<9 that only supports extending DOM prototypes, but
 // note that IE<9 does not support __defineGetter__ or __defineSetter__ so it just renders the method harmless)
-if (!Object.defineProperty ||
-     !(function() { try { Object.defineProperty({}, 'x', {}); return true; } catch (e) { return false; } }())) {
-  Object.defineProperty = function(o, p, desc) {
-    if (!o === Object(o)) throw new TypeError("Object.defineProperty called on non-object");
-    if (ECMAScript.HasProperty(desc, 'get') && Object.prototype.__defineGetter__) { Object.prototype.__defineGetter__.call(o, p, desc.get); }
-    if (ECMAScript.HasProperty(desc, 'set') && Object.prototype.__defineSetter__) { Object.prototype.__defineSetter__.call(o, p, desc.set); }
-    if (ECMAScript.HasProperty(desc, 'value')) { o[p] = desc.value; }
-    return o;
-  };
-}
+var defineProperty = Object.defineProperty || function(o, p, desc) {
+  if (!o === Object(o)) throw new TypeError("Object.defineProperty called on non-object");
+  if (ECMAScript.HasProperty(desc, 'get') && Object.prototype.__defineGetter__) { Object.prototype.__defineGetter__.call(o, p, desc.get); }
+  if (ECMAScript.HasProperty(desc, 'set') && Object.prototype.__defineSetter__) { Object.prototype.__defineSetter__.call(o, p, desc.set); }
+  if (ECMAScript.HasProperty(desc, 'value')) { o[p] = desc.value; }
+  return o;
+};
 
-if (!Object.getOwnPropertyNames) {
-  Object.getOwnPropertyNames = function getOwnPropertyNames(o) {
-    if (o !== Object(o)) throw new TypeError("Object.getOwnPropertyNames called on non-object");
-    var props = [], p;
-    for (p in o) {
-      if (ECMAScript.HasOwnProperty(o, p)) {
-        props.push(p);
-      }
+var getOwnPropertyNames = Object.getOwnPropertyNames || function getOwnPropertyNames(o) {
+  if (o !== Object(o)) throw new TypeError("Object.getOwnPropertyNames called on non-object");
+  var props = [], p;
+  for (p in o) {
+    if (ECMAScript.HasOwnProperty(o, p)) {
+      props.push(p);
     }
-    return props;
-  };
-}
+  }
+  return props;
+};
 
 // ES5: Make obj[index] an alias for obj._getter(index)/obj._setter(index, value)
 // for index in 0 ... obj.length
 function makeArrayAccessors(obj) {
-  if (!Object.defineProperty) { return; }
+  if (!defineProperty) { return; }
 
   if (obj.length > MAX_ARRAY_LENGTH) throw new RangeError("Array too large for polyfill");
 
   function makeArrayAccessor(index) {
-    Object.defineProperty(obj, index, {
+    defineProperty(obj, index, {
       'get': function() { return obj._getter(index); },
       'set': function(v) { obj._setter(index, v); },
       enumerable: true,
