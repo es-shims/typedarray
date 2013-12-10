@@ -3,6 +3,10 @@
 TypedArray polyfill ripped from [this
 module](https://raw.github.com/inexorabletash/polyfill).
 
+[![build status](https://secure.travis-ci.org/substack/typedarray.png)](http://travis-ci.org/substack/typedarray)
+
+[![testling badge](https://ci.testling.com/substack/typedarray.png)](https://ci.testling.com/substack/typedarray)
+
 # example
 
 ``` js
