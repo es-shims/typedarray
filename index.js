@@ -518,12 +518,12 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
   /** @constructor */
   var DataView = function DataView(buffer, byteOffset, byteLength) {
     if (arguments.length === 0) {
-      buffer = new ArrayBuffer(0);
-    } else if (!(buffer instanceof ArrayBuffer || ECMAScript.Class(buffer) === 'ArrayBuffer')) {
+      buffer = new exports.ArrayBuffer(0);
+    } else if (!(buffer instanceof exports.ArrayBuffer || ECMAScript.Class(buffer) === 'ArrayBuffer')) {
       throw new TypeError("TypeError");
     }
 
-    this.buffer = buffer || new ArrayBuffer(0);
+    this.buffer = buffer || new exports.ArrayBuffer(0);
 
     this.byteOffset = ECMAScript.ToUint32(byteOffset);
     if (this.byteOffset > this.buffer.byteLength) {
