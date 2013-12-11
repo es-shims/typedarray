@@ -553,7 +553,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
       }
       byteOffset += this.byteOffset;
 
-      var uint8Array = new Uint8Array(this.buffer, byteOffset, arrayType.BYTES_PER_ELEMENT),
+      var uint8Array = new exports.Uint8Array(this.buffer, byteOffset, arrayType.BYTES_PER_ELEMENT),
           bytes = [], i;
       for (i = 0; i < arrayType.BYTES_PER_ELEMENT; i += 1) {
         bytes.push(r(uint8Array, i));
@@ -563,7 +563,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
         bytes.reverse();
       }
 
-      return r(new arrayType(new Uint8Array(bytes).buffer), 0);
+      return r(new arrayType(new exports.Uint8Array(bytes).buffer), 0);
     };
   }
 
@@ -586,7 +586,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
 
       // Get bytes
       var typeArray = new arrayType([value]),
-          byteArray = new Uint8Array(typeArray.buffer),
+          byteArray = new exports.Uint8Array(typeArray.buffer),
           bytes = [], i, byteView;
 
       for (i = 0; i < arrayType.BYTES_PER_ELEMENT; i += 1) {
@@ -599,7 +599,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
       }
 
       // Write them
-      byteView = new Uint8Array(this.buffer, byteOffset, arrayType.BYTES_PER_ELEMENT);
+      byteView = new exports.Uint8Array(this.buffer, byteOffset, arrayType.BYTES_PER_ELEMENT);
       byteView.set(bytes);
     };
   }
