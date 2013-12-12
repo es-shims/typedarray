@@ -50,8 +50,16 @@ function configureProperties(obj) {
 // (second clause tests for Object.defineProperty() in IE<9 that only supports extending DOM prototypes, but
 // note that IE<9 does not support __defineGetter__ or __defineSetter__ so it just renders the method harmless)
 var defineProp
-if (!Object.defineProperty ||
-    !(function() { try { Object.defineProperty({}, 'x', {}); return true; } catch (e) { return false; } }())) {
+if (Object.defineProperty && (function() {
+      try {
+        Object.defineProperty({}, 'x', {});
+        return true;
+      } catch (e) {
+        return false;
+      }
+    })()) {
+  defineProp = Object.defineProperty;
+} else {
   defineProp = function(o, p, desc) {
     if (!o === Object(o)) throw new TypeError("Object.defineProperty called on non-object");
     if (ECMAScript.HasProperty(desc, 'get') && Object.prototype.__defineGetter__) { Object.prototype.__defineGetter__.call(o, p, desc.get); }
