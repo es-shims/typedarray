@@ -4,7 +4,7 @@
   "description": "TypedArray polyfill for old browsers",
   "main": "index.js",
   "devDependencies": {
-    "tape": "~1.0.4"
+    "tape": "~2.3.2"
   },
   "scripts": {
     "test": "tape test/*.js test/server/*.js"
