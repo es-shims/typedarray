@@ -1,6 +1,6 @@
 {
   "name": "typedarray",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "TypedArray polyfill for old browsers",
   "main": "index.js",
   "devDependencies": {
