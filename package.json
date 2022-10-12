@@ -4,10 +4,11 @@
   "description": "TypedArray polyfill for old browsers",
   "main": "index.js",
   "devDependencies": {
-    "tape": "~2.3.2"
+    "tape": "^5.6.1"
   },
   "scripts": {
-    "test": "tape test/*.js test/server/*.js"
+    "tests-only": "tape 'test/**/*.js'",
+    "test": "npm run tests-only"
   },
   "repository": {
     "type": "git",
