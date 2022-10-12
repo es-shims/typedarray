@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.7](https://github.com/ljharb/typedarray/compare/v0.0.6...v0.0.7) - 2022-10-12
+
+### Commits
+
+- [eslint] fix indentation [`2e83ef6`](https://github.com/ljharb/typedarray/commit/2e83ef6f221111efb96ea5b0adf892d6522d3dc0)
+- [eslint] add eslint [`592fe17`](https://github.com/ljharb/typedarray/commit/592fe17392bcd9c2484316d9ae40d9488782b65f)
+- [readme] rename, add badges [`c5a4998`](https://github.com/ljharb/typedarray/commit/c5a499849d1217aa15cbfedd904ef3c644c33d61)
+- [meta] add `auto-changelog` [`c77cc4a`](https://github.com/ljharb/typedarray/commit/c77cc4a3e1000b21a05010baee21557356893436)
+- [actions] add reusable workflows [`5a874a6`](https://github.com/ljharb/typedarray/commit/5a874a6c334e1e91b535147f0bd70ec1d2e1404a)
+- [meta] create FUNDING.yml; add `funding` in package.json [`5421bfb`](https://github.com/ljharb/typedarray/commit/5421bfbe20052d6b375e42a2628daf934940cc1a)
+- [meta] use `npmignore` to autogenerate an npmignore file [`85f441b`](https://github.com/ljharb/typedarray/commit/85f441bea6ac3689ad69a24bd363807edc5b3d68)
+- Only apps should have lockfiles [`c7cee04`](https://github.com/ljharb/typedarray/commit/c7cee0462c9ce831e53125692382339a2c4871db)
+- [meta] update URLs [`bd1ee94`](https://github.com/ljharb/typedarray/commit/bd1ee944f9627d4604e6c3e3bbd0289ff870bb54)
+- [Dev Deps] update `tape` [`8aaa43b`](https://github.com/ljharb/typedarray/commit/8aaa43b549ffe33d6b7af799784961803b47a151)
+- [meta] add `safe-publish-latest` [`809caf9`](https://github.com/ljharb/typedarray/commit/809caf950e901fd140c28c04ecf0bd9a1bf41a29)
+- [Tests] add `aud` in `posttest` [`c8f7ac5`](https://github.com/ljharb/typedarray/commit/c8f7ac532cd361c9374864bab55ead8e6e0f44e7)
+
 ## [v0.0.6](https://github.com/ljharb/typedarray/compare/v0.0.5...v0.0.6) - 2014-05-17
 
 ### Commits
