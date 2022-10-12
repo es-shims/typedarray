@@ -1,39 +1,86 @@
-var undefined = (void 0); // Paranoia
-
 // Beyond this value, index getters/setters (i.e. array[0], array[1]) are so slow to
 // create, and consume so much memory, that the browser appears frozen.
 var MAX_ARRAY_LENGTH = 1e5;
 
 // Approximations of internal ECMAScript conversion functions
-var ECMAScript = (function() {
+var ECMAScript = (function () {
   // Stash a copy in case other scripts modify these
-  var opts = Object.prototype.toString,
-      ophop = Object.prototype.hasOwnProperty;
+  var opts = Object.prototype.toString;
+  var ophop = Object.prototype.hasOwnProperty;
 
   return {
     // Class returns internal [[Class]] property, used to avoid cross-frame instanceof issues:
-    Class: function(v) { return opts.call(v).replace(/^\[object *|\]$/g, ''); },
-    HasProperty: function(o, p) { return p in o; },
-    HasOwnProperty: function(o, p) { return ophop.call(o, p); },
-    IsCallable: function(o) { return typeof o === 'function'; },
-    ToInt32: function(v) { return v >> 0; },
-    ToUint32: function(v) { return v >>> 0; }
+    Class: function (v) { return opts.call(v).replace(/^\[object *|\]$/g, ''); },
+    HasProperty: function (o, p) { return p in o; },
+    HasOwnProperty: function (o, p) { return ophop.call(o, p); },
+    IsCallable: function (o) { return typeof o === 'function'; },
+    ToInt32: function (v) { return v >> 0; },
+    ToUint32: function (v) { return v >>> 0; }
   };
 }());
 
 // Snapshot intrinsics
-var LN2 = Math.LN2,
-    abs = Math.abs,
-    floor = Math.floor,
-    log = Math.log,
-    min = Math.min,
-    pow = Math.pow,
-    round = Math.round;
+var LN2 = Math.LN2;
+var abs = Math.abs;
+var floor = Math.floor;
+var log = Math.log;
+var min = Math.min;
+var pow = Math.pow;
+var round = Math.round;
+
+function clamp(v, minimum, max) { return v < minimum ? minimum : v > max ? max : v; }
+
+var getOwnPropNames = Object.getOwnPropertyNames || function (o) {
+  if (o !== Object(o)) {
+    throw new TypeError('Object.getOwnPropertyNames called on non-object');
+  }
+  var props = [],
+    p;
+  for (p in o) {
+    if (ECMAScript.HasOwnProperty(o, p)) {
+      props.push(p);
+    }
+  }
+  return props;
+};
+
+// emulate ES5 getter/setter API using legacy APIs
+// http://blogs.msdn.com/b/ie/archive/2010/09/07/transitioning-existing-code-to-the-es5-getter-setter-apis.aspx
+// (second clause tests for Object.defineProperty() in IE<9 that only supports extending DOM prototypes, but
+// note that IE<9 does not support __defineGetter__ or __defineSetter__ so it just renders the method harmless)
+var defineProp;
+if (Object.defineProperty && (function () {
+  try {
+    Object.defineProperty({}, 'x', {});
+    return true;
+  } catch (e) {
+    return false;
+  }
+}())) {
+  defineProp = Object.defineProperty;
+} else {
+  defineProp = function (o, p, desc) {
+    if (!o === Object(o)) {
+      throw new TypeError('Object.defineProperty called on non-object');
+    }
+    if (ECMAScript.HasProperty(desc, 'get') && Object.prototype.__defineGetter__) {
+      Object.prototype.__defineGetter__.call(o, p, desc.get);
+    }
+    if (ECMAScript.HasProperty(desc, 'set') && Object.prototype.__defineSetter__) {
+      Object.prototype.__defineSetter__.call(o, p, desc.set);
+    }
+    if (ECMAScript.HasProperty(desc, 'value')) {
+      o[p] = desc.value;
+    }
+    return o;
+  };
+}
 
 // ES5: lock down object properties
 function configureProperties(obj) {
   if (getOwnPropNames && defineProp) {
-    var props = getOwnPropNames(obj), i;
+    var props = getOwnPropNames(obj),
+      i;
     for (i = 0; i < props.length; i += 1) {
       defineProp(obj, props[i], {
         value: obj[props[i]],
@@ -45,52 +92,17 @@ function configureProperties(obj) {
   }
 }
 
-// emulate ES5 getter/setter API using legacy APIs
-// http://blogs.msdn.com/b/ie/archive/2010/09/07/transitioning-existing-code-to-the-es5-getter-setter-apis.aspx
-// (second clause tests for Object.defineProperty() in IE<9 that only supports extending DOM prototypes, but
-// note that IE<9 does not support __defineGetter__ or __defineSetter__ so it just renders the method harmless)
-var defineProp
-if (Object.defineProperty && (function() {
-      try {
-        Object.defineProperty({}, 'x', {});
-        return true;
-      } catch (e) {
-        return false;
-      }
-    })()) {
-  defineProp = Object.defineProperty;
-} else {
-  defineProp = function(o, p, desc) {
-    if (!o === Object(o)) throw new TypeError("Object.defineProperty called on non-object");
-    if (ECMAScript.HasProperty(desc, 'get') && Object.prototype.__defineGetter__) { Object.prototype.__defineGetter__.call(o, p, desc.get); }
-    if (ECMAScript.HasProperty(desc, 'set') && Object.prototype.__defineSetter__) { Object.prototype.__defineSetter__.call(o, p, desc.set); }
-    if (ECMAScript.HasProperty(desc, 'value')) { o[p] = desc.value; }
-    return o;
-  };
-}
-
-var getOwnPropNames = Object.getOwnPropertyNames || function (o) {
-  if (o !== Object(o)) throw new TypeError("Object.getOwnPropertyNames called on non-object");
-  var props = [], p;
-  for (p in o) {
-    if (ECMAScript.HasOwnProperty(o, p)) {
-      props.push(p);
-    }
-  }
-  return props;
-};
-
 // ES5: Make obj[index] an alias for obj._getter(index)/obj._setter(index, value)
 // for index in 0 ... obj.length
 function makeArrayAccessors(obj) {
   if (!defineProp) { return; }
 
-  if (obj.length > MAX_ARRAY_LENGTH) throw new RangeError("Array too large for polyfill");
+  if (obj.length > MAX_ARRAY_LENGTH) { throw new RangeError('Array too large for polyfill'); }
 
   function makeArrayAccessor(index) {
     defineProp(obj, index, {
-      'get': function() { return obj._getter(index); },
-      'set': function(v) { obj._setter(index, v); },
+      get: function () { return obj._getter(index); },
+      set: function (v) { obj._setter(index, v); },
       enumerable: true,
       configurable: false
     });
@@ -123,24 +135,31 @@ function unpackI16(bytes) { return as_signed(bytes[0] << 8 | bytes[1], 16); }
 function packU16(n) { return [(n >> 8) & 0xff, n & 0xff]; }
 function unpackU16(bytes) { return as_unsigned(bytes[0] << 8 | bytes[1], 16); }
 
-function packI32(n) { return [(n >> 24) & 0xff, (n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]; }
+function packI32(n) {
+  return [
+    (n >> 24) & 0xff, (n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff
+  ];
+}
 function unpackI32(bytes) { return as_signed(bytes[0] << 24 | bytes[1] << 16 | bytes[2] << 8 | bytes[3], 32); }
 
-function packU32(n) { return [(n >> 24) & 0xff, (n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff]; }
+function packU32(n) {
+  return [
+    (n >> 24) & 0xff, (n >> 16) & 0xff, (n >> 8) & 0xff, n & 0xff
+  ];
+}
 function unpackU32(bytes) { return as_unsigned(bytes[0] << 24 | bytes[1] << 16 | bytes[2] << 8 | bytes[3], 32); }
 
 function packIEEE754(v, ebits, fbits) {
 
-  var bias = (1 << (ebits - 1)) - 1,
-      s, e, f, ln,
-      i, bits, str, bytes;
+  var bias = (1 << (ebits - 1)) - 1;
+  var s, e, f,
+    i, bits, str, bytes;
 
   function roundToEven(n) {
-    var w = floor(n), f = n - w;
-    if (f < 0.5)
-      return w;
-    if (f > 0.5)
-      return w + 1;
+    var w = floor(n);
+    var fl = n - w;
+    if (fl < 0.5) { return w; }
+    if (fl > 0.5) { return w + 1; }
     return w % 2 ? w + 1 : w;
   }
 
@@ -150,9 +169,9 @@ function packIEEE754(v, ebits, fbits) {
     // http://dev.w3.org/2006/webapi/WebIDL/#es-type-mapping
     e = (1 << ebits) - 1; f = pow(2, fbits - 1); s = 0;
   } else if (v === Infinity || v === -Infinity) {
-    e = (1 << ebits) - 1; f = 0; s = (v < 0) ? 1 : 0;
+    e = (1 << ebits) - 1; f = 0; s = v < 0 ? 1 : 0;
   } else if (v === 0) {
-    e = 0; f = 0; s = (1 / v === -Infinity) ? 1 : 0;
+    e = 0; f = 0; s = 1 / v === -Infinity ? 1 : 0;
   } else {
     s = v < 0;
     v = abs(v);
@@ -200,8 +219,9 @@ function packIEEE754(v, ebits, fbits) {
 function unpackIEEE754(bytes, ebits, fbits) {
 
   // Bytes to bits
-  var bits = [], i, j, b, str,
-      bias, s, e, f;
+  var bits = [],
+    i, j, b, str,
+    bias, s, e, f;
 
   for (i = bytes.length; i; i -= 1) {
     b = bytes[i - 1];
@@ -220,16 +240,16 @@ function unpackIEEE754(bytes, ebits, fbits) {
 
   // Produce number
   if (e === (1 << ebits) - 1) {
-    return f !== 0 ? NaN : s * Infinity;
+    return f === 0 ? s * Infinity : NaN;
   } else if (e > 0) {
     // Normalized
-    return s * pow(2, e - bias) * (1 + f / pow(2, fbits));
+    return s * pow(2, e - bias) * (1 + (f / pow(2, fbits)));
   } else if (f !== 0) {
     // Denormalized
     return s * pow(2, -(bias - 1)) * (f / pow(2, fbits));
-  } else {
-    return s < 0 ? -0 : 0;
   }
+  return s < 0 ? -0 : 0;
+
 }
 
 function unpackF64(b) { return unpackIEEE754(b, 11, 52); }
@@ -237,17 +257,16 @@ function packF64(v) { return packIEEE754(v, 11, 52); }
 function unpackF32(b) { return unpackIEEE754(b, 8, 23); }
 function packF32(v) { return packIEEE754(v, 8, 23); }
 
-
 //
 // 3 The ArrayBuffer Type
 //
 
-(function() {
+(function () {
 
   /** @constructor */
-  var ArrayBuffer = function ArrayBuffer(length) {
+  function ArrayBuffer(length) {
     length = ECMAScript.ToInt32(length);
-    if (length < 0) throw new RangeError('ArrayBuffer size is not a small enough positive integer');
+    if (length < 0) { throw new RangeError('ArrayBuffer size is not a small enough positive integer'); }
 
     this.byteLength = length;
     this._bytes = [];
@@ -259,7 +278,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
     }
 
     configureProperties(this);
-  };
+  }
 
   exports.ArrayBuffer = exports.ArrayBuffer || ArrayBuffer;
 
@@ -269,11 +288,11 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
 
   // NOTE: this constructor is not exported
   /** @constructor */
-  var ArrayBufferView = function ArrayBufferView() {
-    //this.buffer = null;
-    //this.byteOffset = 0;
-    //this.byteLength = 0;
-  };
+  function ArrayBufferView() {
+    // this.buffer = null;
+    // this.byteOffset = 0;
+    // this.byteLength = 0;
+  }
 
   //
   // 5 The Typed Array View Types
@@ -284,13 +303,13 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
     // identical logic, which this produces.
 
     var ctor;
-    ctor = function(buffer, byteOffset, length) {
+    ctor = function (buffer, byteOffset, length) {
       var array, sequence, i, s;
 
       if (!arguments.length || typeof arguments[0] === 'number') {
         // Constructor(unsigned long length)
         this.length = ECMAScript.ToInt32(arguments[0]);
-        if (length < 0) throw new RangeError('ArrayBufferView size is not a small enough positive integer');
+        if (length < 0) { throw new RangeError('ArrayBufferView size is not a small enough positive integer'); }
 
         this.byteLength = this.length * this.BYTES_PER_ELEMENT;
         this.buffer = new ArrayBuffer(this.byteLength);
@@ -307,8 +326,8 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
         for (i = 0; i < this.length; i += 1) {
           this._setter(i, array._getter(i));
         }
-      } else if (typeof arguments[0] === 'object' &&
-                 !(arguments[0] instanceof ArrayBuffer || ECMAScript.Class(arguments[0]) === 'ArrayBuffer')) {
+      } else if (typeof arguments[0] === 'object'
+                 && !(arguments[0] instanceof ArrayBuffer || ECMAScript.Class(arguments[0]) === 'ArrayBuffer')) {
         // Constructor(sequence<type> array)
         sequence = arguments[0];
 
@@ -321,28 +340,28 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
           s = sequence[i];
           this._setter(i, Number(s));
         }
-      } else if (typeof arguments[0] === 'object' &&
-                 (arguments[0] instanceof ArrayBuffer || ECMAScript.Class(arguments[0]) === 'ArrayBuffer')) {
+      } else if (typeof arguments[0] === 'object'
+                 && (arguments[0] instanceof ArrayBuffer || ECMAScript.Class(arguments[0]) === 'ArrayBuffer')) {
         // Constructor(ArrayBuffer buffer,
         //             optional unsigned long byteOffset, optional unsigned long length)
         this.buffer = buffer;
 
         this.byteOffset = ECMAScript.ToUint32(byteOffset);
         if (this.byteOffset > this.buffer.byteLength) {
-          throw new RangeError("byteOffset out of range");
+          throw new RangeError('byteOffset out of range');
         }
 
         if (this.byteOffset % this.BYTES_PER_ELEMENT) {
           // The given byteOffset must be a multiple of the element
           // size of the specific type, otherwise an exception is raised.
-          throw new RangeError("ArrayBuffer length minus the byteOffset is not a multiple of the element size.");
+          throw new RangeError('ArrayBuffer length minus the byteOffset is not a multiple of the element size.');
         }
 
         if (arguments.length < 3) {
           this.byteLength = this.buffer.byteLength - this.byteOffset;
 
           if (this.byteLength % this.BYTES_PER_ELEMENT) {
-            throw new RangeError("length of buffer minus byteOffset not a multiple of the element size");
+            throw new RangeError('length of buffer minus byteOffset not a multiple of the element size');
           }
           this.length = this.byteLength / this.BYTES_PER_ELEMENT;
         } else {
@@ -351,10 +370,10 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
         }
 
         if ((this.byteOffset + this.byteLength) > this.buffer.byteLength) {
-          throw new RangeError("byteOffset and length reference an area beyond the end of the buffer");
+          throw new RangeError('byteOffset and length reference an area beyond the end of the buffer');
         }
       } else {
-        throw new TypeError("Unexpected argument type(s)");
+        throw new TypeError('Unexpected argument type(s)');
       }
 
       this.constructor = ctor;
@@ -370,18 +389,18 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
     ctor.BYTES_PER_ELEMENT = bytesPerElement;
 
     // getter type (unsigned long index);
-    ctor.prototype._getter = function(index) {
-      if (arguments.length < 1) throw new SyntaxError("Not enough arguments");
+    ctor.prototype._getter = function (index) {
+      if (arguments.length < 1) { throw new SyntaxError('Not enough arguments'); }
 
       index = ECMAScript.ToUint32(index);
       if (index >= this.length) {
-        return undefined;
+        return void undefined;
       }
 
-      var bytes = [], i, o;
-      for (i = 0, o = this.byteOffset + index * this.BYTES_PER_ELEMENT;
-           i < this.BYTES_PER_ELEMENT;
-           i += 1, o += 1) {
+      var bytes = [];
+      for (var i = 0, o = this.byteOffset + (index * this.BYTES_PER_ELEMENT);
+        i < this.BYTES_PER_ELEMENT;
+        i += 1, o += 1) {
         bytes.push(this.buffer._bytes[o]);
       }
       return this._unpack(bytes);
@@ -391,29 +410,29 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
     ctor.prototype.get = ctor.prototype._getter;
 
     // setter void (unsigned long index, type value);
-    ctor.prototype._setter = function(index, value) {
-      if (arguments.length < 2) throw new SyntaxError("Not enough arguments");
+    ctor.prototype._setter = function (index, value) {
+      if (arguments.length < 2) { throw new SyntaxError('Not enough arguments'); }
 
       index = ECMAScript.ToUint32(index);
-      if (index >= this.length) {
-        return undefined;
-      }
-
-      var bytes = this._pack(value), i, o;
-      for (i = 0, o = this.byteOffset + index * this.BYTES_PER_ELEMENT;
-           i < this.BYTES_PER_ELEMENT;
-           i += 1, o += 1) {
-        this.buffer._bytes[o] = bytes[i];
+      if (index < this.length) {
+        var bytes = this._pack(value);
+        var i;
+        var o;
+        for (i = 0, o = this.byteOffset + (index * this.BYTES_PER_ELEMENT);
+          i < this.BYTES_PER_ELEMENT;
+          i += 1, o += 1) {
+          this.buffer._bytes[o] = bytes[i];
+        }
       }
     };
 
     // void set(TypedArray array, optional unsigned long offset);
     // void set(sequence<type> array, optional unsigned long offset);
-    ctor.prototype.set = function(index, value) {
-      if (arguments.length < 1) throw new SyntaxError("Not enough arguments");
+    ctor.prototype.set = function (index, value) { // eslint-disable-line no-unused-vars
+      if (arguments.length < 1) { throw new SyntaxError('Not enough arguments'); }
       var array, sequence, offset, len,
-          i, s, d,
-          byteOffset, byteLength, tmp;
+        i, s, d,
+        byteOffset, byteLength, tmp;
 
       if (typeof arguments[0] === 'object' && arguments[0].constructor === this.constructor) {
         // void set(TypedArray array, optional unsigned long offset);
@@ -421,10 +440,10 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
         offset = ECMAScript.ToUint32(arguments[1]);
 
         if (offset + array.length > this.length) {
-          throw new RangeError("Offset plus length of array is out of range");
+          throw new RangeError('Offset plus length of array is out of range');
         }
 
-        byteOffset = this.byteOffset + offset * this.BYTES_PER_ELEMENT;
+        byteOffset = this.byteOffset + (offset * this.BYTES_PER_ELEMENT);
         byteLength = array.length * this.BYTES_PER_ELEMENT;
 
         if (array.buffer === this.buffer) {
@@ -437,7 +456,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
           }
         } else {
           for (i = 0, s = array.byteOffset, d = byteOffset;
-               i < byteLength; i += 1, s += 1, d += 1) {
+            i < byteLength; i += 1, s += 1, d += 1) {
             this.buffer._bytes[d] = array.buffer._bytes[s];
           }
         }
@@ -448,7 +467,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
         offset = ECMAScript.ToUint32(arguments[1]);
 
         if (offset + len > this.length) {
-          throw new RangeError("Offset plus length of array is out of range");
+          throw new RangeError('Offset plus length of array is out of range');
         }
 
         for (i = 0; i < len; i += 1) {
@@ -456,13 +475,12 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
           this._setter(offset + i, Number(s));
         }
       } else {
-        throw new TypeError("Unexpected argument type(s)");
+        throw new TypeError('Unexpected argument type(s)');
       }
     };
 
     // TypedArray subarray(long begin, optional long end);
-    ctor.prototype.subarray = function(start, end) {
-      function clamp(v, min, max) { return v < min ? min : v > max ? max : v; }
+    ctor.prototype.subarray = function (start, end) {
 
       start = ECMAScript.ToInt32(start);
       end = ECMAScript.ToInt32(end);
@@ -481,8 +499,7 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
         len = 0;
       }
 
-      return new this.constructor(
-        this.buffer, this.byteOffset + start * this.BYTES_PER_ELEMENT, len);
+      return new this.constructor(this.buffer, this.byteOffset + (start * this.BYTES_PER_ELEMENT), len);
     };
 
     return ctor;
@@ -513,14 +530,14 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
 // 6 The DataView View Type
 //
 
-(function() {
+(function () {
   function r(array, index) {
     return ECMAScript.IsCallable(array.get) ? array.get(index) : array[index];
   }
 
-  var IS_BIG_ENDIAN = (function() {
-    var u16array = new(exports.Uint16Array)([0x1234]),
-        u8array = new(exports.Uint8Array)(u16array.buffer);
+  var IS_BIG_ENDIAN = (function () {
+    var u16array = new exports.Uint16Array([0x1234]),
+      u8array = new exports.Uint8Array(u16array.buffer);
     return r(u8array, 0) === 0x12;
   }());
 
@@ -528,18 +545,18 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
   //             optional unsigned long byteOffset,
   //             optional unsigned long byteLength)
   /** @constructor */
-  var DataView = function DataView(buffer, byteOffset, byteLength) {
+  function DataView(buffer, byteOffset, byteLength) {
     if (arguments.length === 0) {
       buffer = new exports.ArrayBuffer(0);
     } else if (!(buffer instanceof exports.ArrayBuffer || ECMAScript.Class(buffer) === 'ArrayBuffer')) {
-      throw new TypeError("TypeError");
+      throw new TypeError('TypeError');
     }
 
     this.buffer = buffer || new exports.ArrayBuffer(0);
 
     this.byteOffset = ECMAScript.ToUint32(byteOffset);
     if (this.byteOffset > this.buffer.byteLength) {
-      throw new RangeError("byteOffset out of range");
+      throw new RangeError('byteOffset out of range');
     }
 
     if (arguments.length < 3) {
@@ -549,24 +566,25 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
     }
 
     if ((this.byteOffset + this.byteLength) > this.buffer.byteLength) {
-      throw new RangeError("byteOffset and length reference an area beyond the end of the buffer");
+      throw new RangeError('byteOffset and length reference an area beyond the end of the buffer');
     }
 
     configureProperties(this);
-  };
+  }
 
   function makeGetter(arrayType) {
-    return function(byteOffset, littleEndian) {
+    return function (byteOffset, littleEndian) {
 
       byteOffset = ECMAScript.ToUint32(byteOffset);
 
       if (byteOffset + arrayType.BYTES_PER_ELEMENT > this.byteLength) {
-        throw new RangeError("Array index out of range");
+        throw new RangeError('Array index out of range');
       }
       byteOffset += this.byteOffset;
 
       var uint8Array = new exports.Uint8Array(this.buffer, byteOffset, arrayType.BYTES_PER_ELEMENT),
-          bytes = [], i;
+        bytes = [],
+        i;
       for (i = 0; i < arrayType.BYTES_PER_ELEMENT; i += 1) {
         bytes.push(r(uint8Array, i));
       }
@@ -589,17 +607,18 @@ function packF32(v) { return packIEEE754(v, 8, 23); }
   DataView.prototype.getFloat64 = makeGetter(exports.Float64Array);
 
   function makeSetter(arrayType) {
-    return function(byteOffset, value, littleEndian) {
+    return function (byteOffset, value, littleEndian) {
 
       byteOffset = ECMAScript.ToUint32(byteOffset);
       if (byteOffset + arrayType.BYTES_PER_ELEMENT > this.byteLength) {
-        throw new RangeError("Array index out of range");
+        throw new RangeError('Array index out of range');
       }
 
       // Get bytes
       var typeArray = new arrayType([value]),
-          byteArray = new exports.Uint8Array(typeArray.buffer),
-          bytes = [], i, byteView;
+        byteArray = new exports.Uint8Array(typeArray.buffer),
+        bytes = [],
+        i, byteView;
 
       for (i = 0; i < arrayType.BYTES_PER_ELEMENT; i += 1) {
         bytes.push(r(byteArray, i));
