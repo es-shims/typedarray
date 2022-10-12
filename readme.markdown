@@ -3,9 +3,9 @@
 TypedArray polyfill ripped from [this
 module](https://raw.github.com/inexorabletash/polyfill).
 
-[![build status](https://secure.travis-ci.org/substack/typedarray.png)](http://travis-ci.org/substack/typedarray)
+[![build status](https://secure.travis-ci.org/es-shims/typedarray.png)](http://travis-ci.org/es-shims/typedarray)
 
-[![testling badge](https://ci.testling.com/substack/typedarray.png)](https://ci.testling.com/substack/typedarray)
+[![testling badge](https://ci.testling.com/es-shims/typedarray.png)](https://ci.testling.com/es-shims/typedarray)
 
 # example
 

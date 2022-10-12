@@ -18,9 +18,9 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/substack/typedarray.git"
+		"url": "git://github.com/es-shims/typedarray.git"
 	},
-	"homepage": "https://github.com/substack/typedarray",
+	"homepage": "https://github.com/es-shims/typedarray",
 	"keywords": [
 		"ArrayBuffer",
 		"DataView",
