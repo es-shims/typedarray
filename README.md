@@ -7,12 +7,7 @@
 
 [![npm badge][npm-badge-png]][package-url]
 
-TypedArray polyfill ripped from [this
-module](https://raw.github.com/inexorabletash/polyfill).
-
-[![build status](https://secure.travis-ci.org/es-shims/typedarray.png)](http://travis-ci.org/es-shims/typedarray)
-
-[![testling badge](https://ci.testling.com/es-shims/typedarray.png)](https://ci.testling.com/es-shims/typedarray)
+TypedArray polyfill ripped from [this module](https://github.com/inexorabletash/polyfill).
 
 # example
 
@@ -63,9 +58,21 @@ or download a UMD build from browserify CDN:
 
 http://wzrd.in/standalone/typedarray@latest
 
-# license
+# License
 
 MIT
+
+Original can be found at:
+  https://bitbucket.org/lindenlab/llsd
+Modifications by Joshua Bell inexorabletash@gmail.com
+  https://github.com/inexorabletash/polyfill
+
+ES3/ES5 implementation of the Krhonos Typed Array Specification
+  Ref: http://www.khronos.org/registry/typedarray/specs/latest/
+  Date: 2011-02-01
+
+Variations:
+ * Allows `typed_array.get`/`set()` as alias for subscripts (`typed_array`[])
 
 [package-url]: https://npmjs.org/package/typedarray
 [npm-version-svg]: https://versionbadg.es/es-shims/typedarray.svg
